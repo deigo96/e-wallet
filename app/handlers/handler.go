@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/deigo96/e-wallet.git/app/controllers/auth"
 	"github.com/deigo96/e-wallet.git/app/controllers/users"
 	"github.com/deigo96/e-wallet.git/config"
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,9 @@ func NewHandler(config *config.Configuration, db *gorm.DB, router *gin.RouterGro
 	// services := services.NewService(*repository, config)
 	// controller := controllers.NewController(services, *config)
 
-	controller := users.NewUserController(db, *config)
+	userController := users.NewUserController(db, *config)
+	authController := auth.NewAuthController(db, *config)
 
-	NewUserHandler(controller, router)
+	NewUserHandler(userController, router)
+	NewAuthHandler(authController, router)
 }

@@ -1,23 +1,19 @@
 package models
 
+import "time"
+
 type User struct {
-	ID    int    `json:"id" gorm:"primaryKey"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        int        `json:"id"`
+	Username  string     `json:"username"`
+	Email     string     `json:"email"`
+	Password  string     `json:"password"`
+	IsActive  bool       `json:"is_active,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
-func (u *User) TableName() string {
-	return "users"
-}
-
-func NewUser(name, email string) *User {
-	return &User{Name: name, Email: email}
-}
-
-func NewUserWithID(id int, name, email string) *User {
-	return &User{ID: id, Name: name, Email: email}
-}
-
-func (u *User) GetID() int {
-	return u.ID
+type CreateUserRequest struct {
+	Username string `json:"username" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }

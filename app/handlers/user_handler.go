@@ -6,5 +6,8 @@ import (
 )
 
 func NewUserHandler(controller users.Controller, router *gin.RouterGroup) {
-	router.GET("/users", controller.GetUsersHandler)
+	userRoute := router.Group("/users")
+
+	userRoute.GET("", controller.GetUsersHandler)
+	userRoute.POST("/register", controller.CreateUser)
 }

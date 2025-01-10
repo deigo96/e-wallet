@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/deigo96/e-wallet.git/app/handlers"
@@ -23,6 +22,10 @@ func main() {
 		ExposeHeaders: []string{"X-Total-Count"},
 	}))
 
+	r.Use(func(c *gin.Context) {
+		c.Header("Content-Type", "application/json")
+	})
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -31,7 +34,6 @@ func main() {
 
 	v1 := r.Group("/api/v1")
 	handlers.NewHandler(configuration, db, v1)
-	fmt.Println(configuration)
 
 	r.Run(configuration.ServiceHost + ":" + configuration.ServicePort) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 

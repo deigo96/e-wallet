@@ -2,16 +2,22 @@ package users
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
+	"github.com/deigo96/e-wallet.git/app/constant"
+	"github.com/deigo96/e-wallet.git/app/entity"
+	customError "github.com/deigo96/e-wallet.git/app/error"
 	"github.com/deigo96/e-wallet.git/app/models"
 	"github.com/deigo96/e-wallet.git/app/repository/users"
+	"github.com/deigo96/e-wallet.git/app/utils"
 	"github.com/deigo96/e-wallet.git/config"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type UserService interface {
 	GetAllUsers(c context.Context) ([]models.User, error)
+	CreateUser(c *gin.Context, user *models.CreateUserRequest) error
 }
 
 type userService struct {
@@ -35,8 +41,55 @@ func (us userService) GetAllUsers(c context.Context) ([]models.User, error) {
 	for _, user := range users {
 		userResponse = append(userResponse, user.ToModel())
 	}
-	fmt.Println(len(userResponse))
-	fmt.Println(userResponse)
 
 	return userResponse, nil
+}
+
+func (us *userService) CreateUser(c *gin.Context, user *models.CreateUserRequest) error {
+
+	userEmailResponse, err := us.userRepository.GetUserByEmail(c, user.Email)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if userEmailResponse != nil {
+		return customError.ErrEmailAlreadyUsed
+	}
+
+	userNameResponse, err := us.userRepository.GetUserByUsername(c, user.Username)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if userNameResponse != nil {
+		return customError.ErrUsernameAlreadyUsed
+	}
+
+	password, err := utils.HashPassword(user.Password)
+	if err != nil {
+		return err
+	}
+
+	userEntity := entity.User{
+		Username: user.Username,
+		Email:    user.Email,
+		Password: password,
+		Role:     constant.ROLE_USER,
+	}
+
+	ctx := utils.GetContext(c)
+
+	if ctx.ID != 0 && (ctx.Role == constant.GetRoleName(constant.ROLE_ADMIN) ||
+		ctx.Role == constant.GetRoleName(constant.ROLE_SUPER_ADMIN)) {
+
+		userEntity.CreatedBy = ctx.ID
+		userEntity.UpdatedBy = ctx.ID
+	}
+
+	if err := us.userRepository.CreateUser(c, &userEntity); err != nil {
+		return err
+	}
+
+	return nil
+
 }
