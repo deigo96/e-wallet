@@ -20,6 +20,7 @@ import (
 type ProfileService interface {
 	GetProfile(c *gin.Context) (*models.ProfileResponse, error)
 	CreateProfile(c *gin.Context, request *models.ProfileRequest) (*models.ProfileResponse, error)
+	UpdateProfile(c *gin.Context, request *models.ProfileRequest) (*models.ProfileResponse, error)
 }
 
 type profileService struct {
@@ -124,4 +125,27 @@ func (ps *profileService) CreateProfile(c *gin.Context, request *models.ProfileR
 	return &response, nil
 }
 
-// func (ps *profileService) ValidateOTPPhone(c *gin.Context)
+func (ps *profileService) UpdateProfile(c *gin.Context, request *models.ProfileRequest) (*models.ProfileResponse, error) {
+	ctxUser := utils.GetContext(c)
+
+	profile, err := ps.profileRepository.GetProfile(c, ctxUser.ID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, customError.ErrNotFound
+		}
+		return nil, err
+	}
+
+	profileEntity := &entity.Profile{}
+	profileEntity.ToEntity(*request)
+	profileEntity.ID = profile.ID
+
+	res, err := ps.profileRepository.UpdateProfile(c, profileEntity)
+	if err != nil {
+		return nil, err
+	}
+
+	profileResponse := res.ToModel()
+
+	return &profileResponse, nil
+}

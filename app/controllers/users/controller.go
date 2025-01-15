@@ -97,3 +97,27 @@ func (controller Controller) CreateProfile(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, profile)
 }
+
+func (controller Controller) UpdateProfile(c *gin.Context) {
+	req := &models.ProfileRequest{}
+
+	if err := c.BindJSON(req); err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	validate = validator.New()
+
+	if err := validate.Struct(req); err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	profile, err := controller.profileServices.UpdateProfile(c, req)
+	if err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}

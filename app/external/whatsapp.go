@@ -46,7 +46,6 @@ func (w *Whatsapp) sendMessage(payload []byte) (any, error) {
 	body := bytes.NewBuffer(payload)
 
 	req, err := http.NewRequest("POST", url, body)
-	log.Println("req: ", req)
 	if err != nil {
 		return nil, err
 	}

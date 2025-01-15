@@ -15,4 +15,5 @@ func NewUserHandler(controller users.Controller, router *gin.RouterGroup, config
 	userRoute.POST("/register", controller.CreateUser)
 	userRoute.GET("/profile", controller.GetProfile)
 	userRoute.POST("/profile", controller.CreateProfile)
+	userRoute.PUT("/profile", controller.UpdateProfile)
 }
