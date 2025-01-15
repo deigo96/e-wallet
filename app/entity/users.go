@@ -3,6 +3,7 @@ package entity
 import (
 	"time"
 
+	"github.com/deigo96/e-wallet.git/app/constant"
 	"github.com/deigo96/e-wallet.git/app/models"
 )
 
@@ -27,23 +28,24 @@ func (u *User) ToEntity(user models.User) *User {
 	u.ID = user.ID
 	u.Username = user.Username
 	u.Email = user.Email
-	u.Password = user.Password
+	// u.Password = user.Password
 
 	return u
 }
 
-func (u *User) ToModel() models.User {
+func (u *User) ToModel(role int) models.User {
 	user := models.User{
 		ID:       u.ID,
 		Username: u.Username,
 		Email:    u.Email,
 	}
 
-	// if u.Role == 1 || u.Role == 2 {
-	// 	user.IsActive = u.IsActive
-	// 	user.CreatedAt = u.CreatedAt
-	// 	user.UpdatedAt = u.UpdateAt
-	// }
+	if role == constant.ROLE_SUPER_ADMIN || role == constant.ROLE_ADMIN {
+		user.IsActive = u.IsActive
+		user.CreatedAt = &u.CreatedAt
+		user.CreatedBy = &u.CreatedBy
+		user.UpdatedAt = &u.UpdatedAt
+	}
 
 	return user
 }

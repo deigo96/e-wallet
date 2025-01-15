@@ -5,6 +5,7 @@ import (
 
 	"github.com/deigo96/e-wallet.git/app/error"
 	"github.com/deigo96/e-wallet.git/app/models"
+	"github.com/deigo96/e-wallet.git/app/services/profile"
 	"github.com/deigo96/e-wallet.git/app/services/users"
 	"github.com/deigo96/e-wallet.git/config"
 	"github.com/gin-gonic/gin"
@@ -13,14 +14,16 @@ import (
 )
 
 type Controller struct {
-	userServices users.UserService
-	config       config.Configuration
+	userServices    users.UserService
+	profileServices profile.ProfileService
+	config          config.Configuration
 }
 
 func NewUserController(db *gorm.DB, config config.Configuration) Controller {
 	return Controller{
-		userServices: users.NewUserService(&config, db),
-		config:       config,
+		userServices:    users.NewUserService(&config, db),
+		profileServices: profile.NewProfileService(&config, db),
+		config:          config,
 	}
 }
 
@@ -54,11 +57,43 @@ func (controller Controller) CreateUser(c *gin.Context) {
 func (controller Controller) GetUsersHandler(c *gin.Context) {
 	users, err := controller.userServices.GetAllUsers(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		error.ErrorResponse(err, c)
 		return
 	}
 
 	c.JSON(http.StatusOK, users)
+}
+
+func (controller Controller) GetProfile(c *gin.Context) {
+	profile, err := controller.profileServices.GetProfile(c)
+	if err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}
+
+func (controller Controller) CreateProfile(c *gin.Context) {
+	req := &models.ProfileRequest{}
+
+	if err := c.BindJSON(req); err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	validate = validator.New()
+
+	if err := validate.Struct(req); err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	profile, err := controller.profileServices.CreateProfile(c, req)
+	if err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	c.JSON(http.StatusCreated, profile)
 }

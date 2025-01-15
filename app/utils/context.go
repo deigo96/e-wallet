@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/deigo96/e-wallet.git/app/constant"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,11 +13,22 @@ type Context struct {
 func GetContext(c *gin.Context) *Context {
 	id, exist := c.Get("id")
 	if !exist {
-		id = 0
+		id = float64(0)
 	}
 	role, exist := c.Get("role")
 	if !exist {
 		role = ""
 	}
-	return &Context{ID: id.(int), Role: role.(string)}
+	floatID := id.(float64)
+
+	return &Context{ID: int(floatID), Role: role.(string)}
+}
+
+func GetID(c *gin.Context) int {
+	return GetContext(c).ID
+}
+
+func IsAdmin(role string) bool {
+	return role == constant.GetRoleName(constant.ROLE_ADMIN) ||
+		role == constant.GetRoleName(constant.ROLE_SUPER_ADMIN)
 }

@@ -1,7 +1,6 @@
 package users
 
 import (
-	"context"
 	"errors"
 
 	"github.com/deigo96/e-wallet.git/app/constant"
@@ -16,7 +15,7 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers(c context.Context) ([]models.User, error)
+	GetAllUsers(c *gin.Context) ([]models.User, error)
 	CreateUser(c *gin.Context, user *models.CreateUserRequest) error
 }
 
@@ -31,7 +30,13 @@ func NewUserService(config *config.Configuration, db *gorm.DB) UserService {
 		config:         config}
 }
 
-func (us userService) GetAllUsers(c context.Context) ([]models.User, error) {
+func (us userService) GetAllUsers(c *gin.Context) ([]models.User, error) {
+	ctxValue := utils.GetContext(c)
+
+	if !utils.IsAdmin(ctxValue.Role) {
+		return nil, customError.ErrUnauthorized
+	}
+
 	users, err := us.userRepository.GetAllUsers(c)
 	if err != nil {
 		return nil, err
@@ -39,7 +44,7 @@ func (us userService) GetAllUsers(c context.Context) ([]models.User, error) {
 
 	userResponse := []models.User{}
 	for _, user := range users {
-		userResponse = append(userResponse, user.ToModel())
+		userResponse = append(userResponse, user.ToModel(constant.GetRoleValue(ctxValue.Role)))
 	}
 
 	return userResponse, nil

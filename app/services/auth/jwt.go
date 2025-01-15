@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/deigo96/e-wallet.git/app/models"
 	"github.com/deigo96/e-wallet.git/config"
 	"github.com/golang-jwt/jwt/v5"
@@ -22,7 +24,14 @@ func NewJWTService(config *config.Configuration) JWTService {
 }
 
 func (s *jwtService) GenerateToken(customClaim models.CustomClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, customClaim.Register)
+	jwtClaims := jwt.MapClaims{
+		"id":    customClaim.ID,
+		"email": customClaim.Email,
+		"role":  customClaim.Role,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
 
 	tokenString, err := token.SignedString([]byte(s.config.SecretKey))
 	if err != nil {

@@ -16,6 +16,6 @@ func NewHandler(config *config.Configuration, db *gorm.DB, router *gin.RouterGro
 	userController := users.NewUserController(db, *config)
 	authController := auth.NewAuthController(db, *config)
 
-	NewUserHandler(userController, router)
-	NewAuthHandler(authController, router)
+	NewUserHandler(userController, router, config)
+	NewAuthHandler(authController, router, config)
 }

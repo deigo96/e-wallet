@@ -37,6 +37,22 @@ func NewError(message string) *Error {
 		err.Code = 4005
 		err.HttpCode = http.StatusBadRequest
 		err.Message = message
+	case ErrUnauthorized.Error():
+		err.Code = 4006
+		err.HttpCode = http.StatusUnauthorized
+		err.Message = message
+	case ErrProfileAlreadyCreated.Error():
+		err.Code = 4007
+		err.HttpCode = http.StatusBadRequest
+		err.Message = message
+	case ErrInvalidOTP.Error():
+		err.Code = 4008
+		err.HttpCode = http.StatusBadRequest
+		err.Message = message
+	case ErrInvalidPhone.Error():
+		err.Code = 4009
+		err.HttpCode = http.StatusBadRequest
+		err.Message = message
 	default:
 		err.Code = 5001
 		err.HttpCode = http.StatusInternalServerError
@@ -48,7 +64,6 @@ func NewError(message string) *Error {
 
 func ErrorResponse(err error, c *gin.Context) {
 	newError := NewError(err.Error())
-	println(newError.Code, newError.HttpCode, newError.Message)
 
 	// if validationErrs, ok := err.(validator.ValidationErrors); ok {
 
