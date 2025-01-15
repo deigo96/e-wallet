@@ -5,17 +5,27 @@ import "fmt"
 var (
 	WhatsappOTPTemplate = `{
 		"messaging_product": "whatsapp",
-		"recipient_type": "individual",
 		"to": "%s",
 		"type": "template",
 		"template": {
 			"name": "otp",
 			"language": {
-				"code": "en_US"
+				"code": "en"
 			},
 			"components": [
 				{
 					"type": "body",
+					"parameters": [
+						{
+							"type": "text",
+							"text": "%s"
+						}
+					]
+				},
+				{
+					"type": "button",
+					"sub_type": "url",
+					"index": 0,
 					"parameters": [
 						{
 							"type": "text",

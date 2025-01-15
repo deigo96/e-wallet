@@ -31,7 +31,7 @@ func NewWhatsappService(config *config.Configuration) *Whatsapp {
 
 func (w *Whatsapp) SendMessage(to string, message string) (any, error) {
 
-	request := fmt.Sprintf(string(constant.WhatsappOTPText), to, message)
+	request := fmt.Sprintf(string(constant.WhatsappOTPTemplate), to, message, message)
 
 	resp, err := w.sendMessage([]byte(request))
 	if err != nil {
