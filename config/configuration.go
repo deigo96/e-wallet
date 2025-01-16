@@ -17,6 +17,7 @@ type Configuration struct {
 	TwilioConfig *TwilioConfig
 	WAConfig     *WhatsappConfig
 	SMPTPConfig  *SMPTPConfig
+	Midtrans     *Midtrans
 }
 
 type DBConfig struct {
@@ -48,6 +49,12 @@ type SMPTPConfig struct {
 	Sender   string
 	Email    string
 	Password string
+}
+
+type Midtrans struct {
+	ServerKey  string
+	ClientKey  string
+	MerchantID string
 }
 
 func NewConfiguration() *Configuration {
@@ -93,6 +100,11 @@ func getConfig() *Configuration {
 			Sender:   os.Getenv("SMTP_SENDER"),
 			Email:    os.Getenv("SMTP_EMAIL"),
 			Password: os.Getenv("SMTP_PASSWORD"),
+		},
+		Midtrans: &Midtrans{
+			ServerKey:  os.Getenv("MIDTRANS_SERVER_KEY"),
+			ClientKey:  os.Getenv("MIDTRANS_CLIENT_KEY"),
+			MerchantID: os.Getenv("MIDTRANS_MERCHANT_ID"),
 		},
 	}
 }
