@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"time"
 
 	"github.com/deigo96/e-wallet.git/app/constant"
 	"github.com/deigo96/e-wallet.git/app/entity"
@@ -10,11 +11,12 @@ import (
 
 type UserRepository interface {
 	GetAllUsers(c context.Context) ([]entity.User, error)
-	CreateUser(c context.Context, user *entity.User) error
+	CreateUser(c context.Context, tx *gorm.DB, user *entity.User) error
 	GetUserFilter(c context.Context, username, email, operator string) (*entity.User, error)
 	GetUserByID(c context.Context, userID int) (*entity.User, error)
 	GetUserByUsername(c context.Context, username string) (*entity.User, error)
 	GetUserByEmail(c context.Context, email string) (*entity.User, error)
+	ActivateUser(c context.Context, email string) error
 }
 
 type userRepository struct {
@@ -93,9 +95,24 @@ func (ur *userRepository) GetUserFilter(c context.Context, username, email, oper
 	return user, nil
 }
 
-func (ur *userRepository) CreateUser(c context.Context, user *entity.User) error {
-	if err := ur.db.Create(user).Error; err != nil {
+func (ur *userRepository) CreateUser(c context.Context, tx *gorm.DB, user *entity.User) error {
+	if err := tx.Create(user).Error; err != nil {
 		return constant.ErrInternalServerError
+	}
+
+	return nil
+}
+
+func (ur *userRepository) ActivateUser(c context.Context, email string) error {
+	user := &entity.User{}
+
+	if err := ur.db.Model(user).
+		Where("email = ?", email).
+		Updates(map[string]interface{}{
+			"is_active":  true,
+			"updated_at": time.Now(),
+		}).Error; err != nil {
+		return err
 	}
 
 	return nil

@@ -32,7 +32,7 @@ func main() {
 		})
 	})
 
-	v1 := r.Group("/api/v1")
+	v1 := r.Group(configuration.APIVersion)
 	handlers.NewHandler(configuration, db, v1)
 
 	r.Run(configuration.ServiceHost + ":" + configuration.ServicePort) // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")

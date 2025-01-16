@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"time"
+
+	"github.com/deigo96/e-wallet.git/config"
 )
 
 func GenerateOTP() string {
@@ -32,4 +36,16 @@ func RefactorPhoneNumber(phoneNumber string) string {
 
 func ValidPhone(phone string) bool {
 	return string(phone[0]) == "0" || phone[0:2] == "62"
+}
+
+func GenerateEmailVerification(email string) string {
+	hasher := sha1.New()
+	hasher.Write([]byte(email))
+	hash := hex.EncodeToString(hasher.Sum(nil))
+	return hash
+}
+
+func GenerateLinkEmailVerification(config *config.Configuration, email string) string {
+	baseURL := config.ServiceHost + ":" + config.ServicePort + config.APIVersion + "/"
+	return baseURL + "users/verify-email/" + email + "/" + GenerateEmailVerification(email)
 }

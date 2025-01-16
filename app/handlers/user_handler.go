@@ -9,10 +9,15 @@ import (
 
 func NewUserHandler(controller users.Controller, router *gin.RouterGroup, config *config.Configuration) {
 	userRoute := router.Group("/users")
+	publicUserRoute := userRoute
+
+	publicUserRoute.POST("/register", controller.CreateUser)
+	publicUserRoute.GET("/verify-email/:email/:token", controller.VerifyEmail)
+
 	userRoute.Use(middleware.Authorization(config))
 
 	userRoute.GET("", controller.GetUsersHandler)
-	userRoute.POST("/register", controller.CreateUser)
+	userRoute.POST("/resend-email-verification", controller.ResendEmailVerification)
 	userRoute.GET("/profile", controller.GetProfile)
 	userRoute.POST("/profile", controller.CreateProfile)
 	userRoute.PUT("/profile", controller.UpdateProfile)

@@ -2,10 +2,12 @@ package users
 
 import (
 	"errors"
+	"log"
 
 	"github.com/deigo96/e-wallet.git/app/constant"
 	"github.com/deigo96/e-wallet.git/app/entity"
 	customError "github.com/deigo96/e-wallet.git/app/error"
+	"github.com/deigo96/e-wallet.git/app/external"
 	"github.com/deigo96/e-wallet.git/app/models"
 	"github.com/deigo96/e-wallet.git/app/repository/users"
 	"github.com/deigo96/e-wallet.git/app/utils"
@@ -17,17 +19,23 @@ import (
 type UserService interface {
 	GetAllUsers(c *gin.Context) ([]models.User, error)
 	CreateUser(c *gin.Context, user *models.CreateUserRequest) error
+	VerifyEmail(c *gin.Context, email, token string) error
+	ResendEmailVerification(c *gin.Context) error
 }
 
 type userService struct {
 	userRepository users.UserRepository
+	emailService   external.EmailService
 	config         *config.Configuration
+	db             *gorm.DB
 }
 
 func NewUserService(config *config.Configuration, db *gorm.DB) UserService {
 	return &userService{
 		userRepository: users.NewUserRepository(db),
-		config:         config}
+		emailService:   external.NewEmailService(config),
+		config:         config,
+		db:             db}
 }
 
 func (us userService) GetAllUsers(c *gin.Context) ([]models.User, error) {
@@ -51,6 +59,13 @@ func (us userService) GetAllUsers(c *gin.Context) ([]models.User, error) {
 }
 
 func (us *userService) CreateUser(c *gin.Context, user *models.CreateUserRequest) error {
+	tx := us.db.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
 	userEmailResponse, err := us.userRepository.GetUserByEmail(c, user.Email)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -58,6 +73,9 @@ func (us *userService) CreateUser(c *gin.Context, user *models.CreateUserRequest
 	}
 
 	if userEmailResponse != nil {
+		if userEmailResponse.EmailVerification != nil && !userEmailResponse.IsActive {
+			return us.resendEmailVerification(c, userEmailResponse.ID)
+		}
 		return customError.ErrEmailAlreadyUsed
 	}
 
@@ -75,11 +93,14 @@ func (us *userService) CreateUser(c *gin.Context, user *models.CreateUserRequest
 		return err
 	}
 
+	emailVerification := utils.GenerateEmailVerification(user.Email)
+
 	userEntity := entity.User{
-		Username: user.Username,
-		Email:    user.Email,
-		Password: password,
-		Role:     constant.ROLE_USER,
+		Username:          user.Username,
+		Email:             user.Email,
+		Password:          password,
+		Role:              constant.ROLE_USER,
+		EmailVerification: &emailVerification,
 	}
 
 	ctx := utils.GetContext(c)
@@ -91,10 +112,107 @@ func (us *userService) CreateUser(c *gin.Context, user *models.CreateUserRequest
 		userEntity.UpdatedBy = ctx.ID
 	}
 
-	if err := us.userRepository.CreateUser(c, &userEntity); err != nil {
+	if err := us.userRepository.CreateUser(c, tx, &userEntity); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := us.sendEmailVerification(&userEntity); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return err
 	}
 
 	return nil
 
+}
+
+func (us *userService) VerifyEmail(c *gin.Context, email, token string) error {
+	user, err := us.userRepository.GetUserByEmail(c, email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return customError.ErrNotFound
+		}
+		return err
+	}
+
+	if user.EmailVerification == nil {
+		return customError.ErrNotFound
+	}
+
+	if *user.EmailVerification != token {
+		return customError.ErrNotFound
+	}
+
+	if err := us.userRepository.ActivateUser(c, email); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (us *userService) ResendEmailVerification(c *gin.Context) error {
+	ctxUser := utils.GetContext(c)
+
+	return us.resendEmailVerification(c, ctxUser.ID)
+}
+
+func (us *userService) resendEmailVerification(c *gin.Context, userID int) error {
+
+	user, err := us.userRepository.GetUserByID(c, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return customError.ErrNotFound
+		}
+		return err
+	}
+
+	if user.EmailVerification == nil {
+		log.Println("Email verification token not found")
+		return customError.ErrNotFound
+	}
+
+	if user.IsActive {
+		log.Println("User is already active")
+		return customError.ErrNotFound
+	}
+
+	if err := us.sendEmailVerification(user); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (us *userService) sendEmailVerification(user *entity.User) error {
+	if user.Email == "" && user.EmailVerification == nil {
+		return customError.ErrNotFound
+	}
+
+	linkEmail := "https://" + utils.GenerateLinkEmailVerification(us.config, user.Email)
+
+	message := `
+		<!DOCTYPE html>
+		<html>
+		<body>
+		<p>Hi [Recipient Name],</p>
+		<p>Thank you for joining us. To get started, please click the link below:</p>
+		<p><a href="` + linkEmail + `">Click here to verify your email</a></p>
+		<p>If you have any questions, feel free to reach out to us at support@example.com.</p>
+		<p>Best regards,<br>Your Team</p>
+		</body>
+		</html>
+		`
+
+	if err := us.emailService.SendEmail(
+		user.Email,
+		"Email verification",
+		message); err != nil {
+		return err
+	}
+
+	return nil
 }

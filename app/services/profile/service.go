@@ -56,7 +56,19 @@ func (ps *profileService) GetProfile(c *gin.Context) (*models.ProfileResponse, e
 		return nil, err
 	}
 
+	user, err := ps.userRepository.GetUserByID(c, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, customError.ErrNotFound
+		}
+		return nil, err
+	}
+
 	response := profile.ToModel()
+
+	response.Email = user.Email
+	response.IsActive = user.IsActive
+
 	return &response, nil
 }
 

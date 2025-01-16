@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -11,9 +12,11 @@ type Configuration struct {
 	ServiceHost  string
 	ServicePort  string
 	SecretKey    string
+	APIVersion   string
 	DbConfig     *DBConfig
 	TwilioConfig *TwilioConfig
 	WAConfig     *WhatsappConfig
+	SMPTPConfig  *SMPTPConfig
 }
 
 type DBConfig struct {
@@ -39,6 +42,14 @@ type WhatsappConfig struct {
 	APIVersion  string
 }
 
+type SMPTPConfig struct {
+	Host     string
+	Port     string
+	Sender   string
+	Email    string
+	Password string
+}
+
 func NewConfiguration() *Configuration {
 	return getConfig()
 }
@@ -46,6 +57,7 @@ func NewConfiguration() *Configuration {
 func getConfig() *Configuration {
 	config := godotenv.Load()
 	if err := config; err != nil {
+		fmt.Println("Error loading .env file:", err)
 		panic(err)
 	}
 
@@ -54,6 +66,7 @@ func getConfig() *Configuration {
 		ServiceHost: os.Getenv("SERVICE_HOST"),
 		ServicePort: os.Getenv("SERVICE_PORT"),
 		SecretKey:   os.Getenv("SECRET_KEY"),
+		APIVersion:  os.Getenv("API_VERSION"),
 		DbConfig: &DBConfig{
 			DbHost:     os.Getenv("DB_HOST"),
 			DbPort:     os.Getenv("DB_PORT"),
@@ -73,6 +86,13 @@ func getConfig() *Configuration {
 			PhoneNumber: os.Getenv("WHATSAPP_PHONE_NUMBER"),
 			BaseURL:     os.Getenv("WHATSAPP_BASE_URL"),
 			APIVersion:  os.Getenv("WHATSAPP_API_VERSION"),
+		},
+		SMPTPConfig: &SMPTPConfig{
+			Host:     os.Getenv("SMTP_HOST"),
+			Port:     os.Getenv("SMTP_PORT"),
+			Sender:   os.Getenv("SMTP_SENDER"),
+			Email:    os.Getenv("SMTP_EMAIL"),
+			Password: os.Getenv("SMTP_PASSWORD"),
 		},
 	}
 }

@@ -3,11 +3,13 @@ package models
 type ProfileResponse struct {
 	FullName        string `json:"full_name"`
 	Address         string `json:"address"`
+	Email           string `json:"email"`
 	PhoneNumber     string `json:"phone"`
 	PlaceOfBirth    string `json:"place_of_birth"`
 	DateOfBirth     string `json:"date_of_birth"`
 	UserID          int    `json:"user_id"`
 	IsVerifiedPhone bool   `json:"is_verified_phone"`
+	IsActive        bool   `json:"is_active"`
 }
 
 type ProfileRequest struct {

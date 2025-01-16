@@ -8,16 +8,17 @@ import (
 )
 
 type User struct {
-	ID        int `gorm:"primaryKey"`
-	Username  string
-	Email     string
-	Password  string
-	IsActive  bool
-	Role      int
-	CreatedAt time.Time
-	CreatedBy int
-	UpdatedAt time.Time
-	UpdatedBy int
+	ID                int `gorm:"primaryKey"`
+	Username          string
+	Email             string
+	Password          string
+	IsActive          bool
+	Role              int
+	CreatedAt         time.Time
+	CreatedBy         int
+	UpdatedAt         time.Time
+	UpdatedBy         int
+	EmailVerification *string
 }
 
 func (u *User) TableName() string {

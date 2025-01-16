@@ -1,6 +1,7 @@
 package users
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/deigo96/e-wallet.git/app/error"
@@ -120,4 +121,30 @@ func (controller Controller) UpdateProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, profile)
+}
+
+func (controller Controller) VerifyEmail(c *gin.Context) {
+	email := c.Param("email")
+	token := c.Param("token")
+
+	if err := controller.userServices.VerifyEmail(c, email, token); err != nil {
+		log.Println("Error verifying email: " + err.Error())
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Email verified successfully",
+	})
+}
+
+func (controller Controller) ResendEmailVerification(c *gin.Context) {
+	if err := controller.userServices.ResendEmailVerification(c); err != nil {
+		error.ErrorResponse(err, c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Email verification link sent successfully",
+	})
 }
