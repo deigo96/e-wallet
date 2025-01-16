@@ -9,6 +9,7 @@ import (
 	customError "github.com/deigo96/e-wallet.git/app/error"
 	"github.com/deigo96/e-wallet.git/app/external"
 	"github.com/deigo96/e-wallet.git/app/models"
+	"github.com/deigo96/e-wallet.git/app/repository/balances"
 	"github.com/deigo96/e-wallet.git/app/repository/users"
 	"github.com/deigo96/e-wallet.git/app/utils"
 	"github.com/deigo96/e-wallet.git/config"
@@ -24,18 +25,20 @@ type UserService interface {
 }
 
 type userService struct {
-	userRepository users.UserRepository
-	emailService   external.EmailService
-	config         *config.Configuration
-	db             *gorm.DB
+	userRepository    users.UserRepository
+	emailService      external.EmailService
+	balanceRepository balances.BalanceRepository
+	config            *config.Configuration
+	db                *gorm.DB
 }
 
 func NewUserService(config *config.Configuration, db *gorm.DB) UserService {
 	return &userService{
-		userRepository: users.NewUserRepository(db),
-		emailService:   external.NewEmailService(config),
-		config:         config,
-		db:             db}
+		userRepository:    users.NewUserRepository(db),
+		emailService:      external.NewEmailService(config),
+		balanceRepository: balances.NewBalanceRepository(db),
+		config:            config,
+		db:                db}
 }
 
 func (us userService) GetAllUsers(c *gin.Context) ([]models.User, error) {
@@ -131,6 +134,14 @@ func (us *userService) CreateUser(c *gin.Context, user *models.CreateUserRequest
 }
 
 func (us *userService) VerifyEmail(c *gin.Context, email, token string) error {
+	tx := us.db.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	user, err := us.userRepository.GetUserByEmail(c, email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -147,7 +158,23 @@ func (us *userService) VerifyEmail(c *gin.Context, email, token string) error {
 		return customError.ErrNotFound
 	}
 
+	balance := &entity.Balance{
+		UserID:  user.ID,
+		Balance: 0,
+	}
+
+	_, err = us.balanceRepository.CreateBalance(c, tx, balance)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	if err := us.userRepository.ActivateUser(c, email); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		return err
 	}
 
