@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/deigo96/e-wallet.git/app/constant"
 	"github.com/deigo96/e-wallet.git/config"
 )
 
@@ -53,4 +54,8 @@ func GenerateLinkEmailVerification(config *config.Configuration, email string) s
 func GenerateOrderID() string {
 	preffix := "EW-"
 	return preffix + fmt.Sprint(time.Now().Nanosecond())
+}
+
+func GenerateVaNumber(phone string) string {
+	return constant.PREFFIX_VA_NUMBER + phone
 }

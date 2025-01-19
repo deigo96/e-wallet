@@ -14,6 +14,7 @@ type Profile struct {
 	PlaceOfBirth    string `json:"place_of_birth"`
 	DateOfBirth     string `json:"date_of_birth"`
 	UserID          int    `json:"user_id"`
+	VANumber        string
 	IsVerifiedPhone bool
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

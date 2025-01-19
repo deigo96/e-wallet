@@ -11,6 +11,7 @@ import (
 	"github.com/deigo96/e-wallet.git/app/models"
 	"github.com/deigo96/e-wallet.git/app/repository/balances"
 	"github.com/deigo96/e-wallet.git/app/repository/orders"
+	"github.com/deigo96/e-wallet.git/app/repository/profile"
 	"github.com/deigo96/e-wallet.git/app/repository/transactions"
 	"github.com/deigo96/e-wallet.git/app/repository/users"
 	"github.com/deigo96/e-wallet.git/app/utils"
@@ -31,6 +32,7 @@ type transactionsService struct {
 	balanceRepository     balances.BalanceRepository
 	userRepository        users.UserRepository
 	transactionRepository transactions.TransactionRepository
+	profileRepository     profile.ProfileRepository
 	orderRepository       orders.OrderRepository
 	midtrans              *external.Midtrans
 	config                *config.Configuration
@@ -44,6 +46,7 @@ func NewTransactionService(config *config.Configuration, db *gorm.DB) Transactio
 		transactionRepository: transactions.NewTransactionRepository(db),
 		orderRepository:       orders.NewOrderRepository(db),
 		midtrans:              external.NewMidtrans(config),
+		profileRepository:     profile.NewProfileRepository(db),
 		config:                config,
 		db:                    db,
 	}
@@ -97,6 +100,13 @@ func (t *transactionsService) Topup(c *gin.Context, req *models.TransactionReque
 		}
 	}()
 
+	profile, err := t.profileRepository.GetProfile(c, ctxUser.ID)
+	if err != nil {
+		log.Println("Error getting user: " + err.Error())
+		tx.Rollback()
+		return err
+	}
+
 	req.UserID = ctxUser.ID
 	topupReq := t.constructTopup(req)
 	orderReq := t.constructTopupOrder(topupReq.OrderID, req)
@@ -118,14 +128,14 @@ func (t *transactionsService) Topup(c *gin.Context, req *models.TransactionReque
 	client := t.midtrans.Client
 
 	resp, errMidtrans := client.ChargeTransaction(&coreapi.ChargeReq{
-		PaymentType: "bank_transfer",
+		PaymentType: constant.BANK_TRANSFER,
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  topupReq.OrderID,
 			GrossAmt: int64(topupReq.TotalAmount.IntPart()),
 		},
 		BankTransfer: &coreapi.BankTransferDetails{
-			Bank:     "bca",
-			VaNumber: "1234567890",
+			Bank:     constant.BANK_BCA,
+			VaNumber: profile.VANumber,
 		},
 	})
 	if errMidtrans != nil {
