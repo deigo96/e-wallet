@@ -14,6 +14,7 @@ func main() {
 	db := config.DBConnection(configuration.DbConfig)
 
 	r := gin.Default()
+	gin.SetMode(configuration.APP_ENV)
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:  []string{"*"},

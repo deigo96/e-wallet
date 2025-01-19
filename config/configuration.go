@@ -13,6 +13,7 @@ type Configuration struct {
 	ServicePort  string
 	SecretKey    string
 	APIVersion   string
+	APP_ENV      string
 	DbConfig     *DBConfig
 	TwilioConfig *TwilioConfig
 	WAConfig     *WhatsappConfig
@@ -70,12 +71,18 @@ func getConfig() *Configuration {
 		panic(err)
 	}
 
+	appENV := os.Getenv("APP_ENV")
+	if appENV == "" {
+		appENV = "debug"
+	}
+
 	return &Configuration{
 		ServiceName: os.Getenv("SERVICE_NAME"),
 		ServiceHost: os.Getenv("SERVICE_HOST"),
 		ServicePort: os.Getenv("SERVICE_PORT"),
 		SecretKey:   os.Getenv("SECRET_KEY"),
 		APIVersion:  os.Getenv("API_VERSION"),
+		APP_ENV:     appENV,
 		DbConfig: &DBConfig{
 			DbHost:     os.Getenv("DB_HOST"),
 			DbPort:     os.Getenv("DB_PORT"),
