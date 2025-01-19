@@ -55,6 +55,8 @@ type Midtrans struct {
 	ServerKey  string
 	ClientKey  string
 	MerchantID string
+	BaseURL    string
+	APIVersion string
 }
 
 func NewConfiguration() *Configuration {
@@ -105,6 +107,8 @@ func getConfig() *Configuration {
 			ServerKey:  os.Getenv("MIDTRANS_SERVER_KEY"),
 			ClientKey:  os.Getenv("MIDTRANS_CLIENT_KEY"),
 			MerchantID: os.Getenv("MIDTRANS_MERCHANT_ID"),
+			BaseURL:    os.Getenv("MIDTRANS_BASE_URL"),
+			APIVersion: os.Getenv("MIDTRANS_API_VERSION"),
 		},
 	}
 }

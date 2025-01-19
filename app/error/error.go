@@ -53,6 +53,14 @@ func NewError(message string) *Error {
 		err.Code = 4009
 		err.HttpCode = http.StatusBadRequest
 		err.Message = message
+	case ErrInvalidTransactionType.Error():
+		err.Code = 4010
+		err.HttpCode = http.StatusBadRequest
+		err.Message = message
+	case ErrFailedToCreateTransaction.Error():
+		err.Code = 4011
+		err.HttpCode = http.StatusBadRequest
+		err.Message = message
 	default:
 		err.Code = 5001
 		err.HttpCode = http.StatusInternalServerError

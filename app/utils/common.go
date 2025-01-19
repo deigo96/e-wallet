@@ -49,3 +49,8 @@ func GenerateLinkEmailVerification(config *config.Configuration, email string) s
 	baseURL := config.ServiceHost + ":" + config.ServicePort + config.APIVersion + "/"
 	return baseURL + "users/verify-email/" + email + "/" + GenerateEmailVerification(email)
 }
+
+func GenerateOrderID() string {
+	preffix := "EW-"
+	return preffix + fmt.Sprint(time.Now().Nanosecond())
+}
