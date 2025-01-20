@@ -10,6 +10,7 @@ type ProfileResponse struct {
 	UserID          int    `json:"user_id"`
 	IsVerifiedPhone bool   `json:"is_verified_phone"`
 	IsActive        bool   `json:"is_active"`
+	VANumber        string `json:"va_number"`
 }
 
 type ProfileRequest struct {

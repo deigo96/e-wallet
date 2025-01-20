@@ -20,5 +20,5 @@ func NewHandler(config *config.Configuration, db *gorm.DB, router *gin.RouterGro
 
 	NewUserHandler(userController, router, config)
 	NewAuthHandler(authController, router, config)
-	NewTransactionHandler(transactionController, router, config)
+	NewTransactionHandler(transactionController, router, config, db)
 }

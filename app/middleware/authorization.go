@@ -1,11 +1,16 @@
 package middleware
 
 import (
+	"net/http"
 	"strings"
 
+	customError "github.com/deigo96/e-wallet.git/app/error"
+	"github.com/deigo96/e-wallet.git/app/repository/profile"
+	"github.com/deigo96/e-wallet.git/app/utils"
 	"github.com/deigo96/e-wallet.git/config"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 func Authorization(config *config.Configuration) gin.HandlerFunc {
@@ -34,5 +39,33 @@ func Authorization(config *config.Configuration) gin.HandlerFunc {
 			c.Set("role", claims["role"])
 			c.Next()
 		}
+	}
+}
+
+func TransactionAuthorization(config *config.Configuration, db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		profileRepository := profile.NewProfileRepository(db)
+		ctxUser := utils.GetContext(c)
+
+		newError := customError.NewError(customError.ErrUnverifiedPhone.Error())
+
+		profile, err := profileRepository.GetProfile(c, ctxUser.ID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"code":    newError.Code,
+				"message": newError.Message,
+			})
+			return
+		}
+
+		if !profile.IsVerifiedPhone {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"code":    newError.Code,
+				"message": newError.Message,
+			})
+			return
+		}
+
+		c.Next()
 	}
 }

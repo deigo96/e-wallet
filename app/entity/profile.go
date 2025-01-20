@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/deigo96/e-wallet.git/app/models"
+	"github.com/deigo96/e-wallet.git/app/utils"
 )
 
 type Profile struct {
@@ -29,6 +30,7 @@ func (p *Profile) ToModel() models.ProfileResponse {
 		DateOfBirth:     p.DateOfBirth,
 		UserID:          p.UserID,
 		IsVerifiedPhone: p.IsVerifiedPhone,
+		VANumber:        p.VANumber,
 	}
 }
 
@@ -40,4 +42,5 @@ func (p *Profile) ToEntity(profile models.ProfileRequest) {
 	p.PlaceOfBirth = profile.PlaceOfBirth
 	p.DateOfBirth = profile.DateOfBirth
 	p.UserID = profile.UserID
+	p.VANumber = utils.GenerateVaNumber(profile.PhoneNumber)
 }
