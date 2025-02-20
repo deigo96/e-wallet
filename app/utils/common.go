@@ -59,3 +59,7 @@ func GenerateOrderID() string {
 func GenerateVaNumber(phone string) string {
 	return constant.PREFFIX_VA_NUMBER + phone
 }
+
+func IsTransactionExpired(expiredAt time.Time) bool {
+	return time.Now().After(expiredAt)
+}

@@ -16,6 +16,7 @@ var (
 	ErrInvalidTransactionType    = errors.New("invalid transaction type")
 	ErrFailedToCreateTransaction = errors.New("failed to create transaction")
 	ErrUnverifiedPhone           = errors.New("unverified phone")
+	ErrThereIsPendingTransaction = errors.New("there is pending transaction")
 
 	// error 500
 	ErrInternalServerError = errors.New("internal server error")

@@ -20,8 +20,8 @@ type Controller struct {
 	config          config.Configuration
 }
 
-func NewUserController(db *gorm.DB, config config.Configuration) Controller {
-	return Controller{
+func NewUserController(db *gorm.DB, config config.Configuration) *Controller {
+	return &Controller{
 		userServices:    users.NewUserService(&config, db),
 		profileServices: profile.NewProfileService(&config, db),
 		config:          config,

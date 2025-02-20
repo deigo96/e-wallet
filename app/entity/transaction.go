@@ -19,4 +19,5 @@ type Transaction struct {
 	CreatedBy       *string
 	UpdatedAt       time.Time
 	UpdatedBy       *string
+	PaidAt          *time.Time
 }

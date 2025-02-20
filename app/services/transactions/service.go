@@ -107,6 +107,12 @@ func (t *transactionsService) Topup(c *gin.Context, req *models.TransactionReque
 		return err
 	}
 
+	if err := t.handlePendingTransaction(c, tx, ctxUser.ID); err != nil {
+		log.Println("Error handling pending transaction: " + err.Error())
+		tx.Rollback()
+		return err
+	}
+
 	req.UserID = ctxUser.ID
 	topupReq := t.constructTopup(req)
 	orderReq := t.constructTopupOrder(topupReq.OrderID, req)
@@ -155,4 +161,29 @@ func (t *transactionsService) Topup(c *gin.Context, req *models.TransactionReque
 	}
 
 	return nil
+}
+
+func (t *transactionsService) getLastTransaction(c *gin.Context, userID int) (*entity.Transaction, error) {
+	return t.transactionRepository.GetLastTransaction(c, userID)
+}
+
+func (t *transactionsService) handlePendingTransaction(c *gin.Context, tx *gorm.DB, userID int) error {
+
+	transaction, err := t.getLastTransaction(c, userID)
+	if err != nil {
+		return err
+	}
+
+	if transaction == nil || transaction.Status != constant.TransactionPending {
+		return nil
+	}
+
+	if utils.IsTransactionExpired(transaction.CreatedAt) {
+		transaction.Status = constant.TransactionFailed
+		_, err := t.transactionRepository.UpdateTransactionStatus(c, tx, transaction)
+		return err
+	}
+
+	return customError.ErrThereIsPendingTransaction
+
 }

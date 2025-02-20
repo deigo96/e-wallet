@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewUserHandler(controller users.Controller, router *gin.RouterGroup, config *config.Configuration) {
+func NewUserHandler(controller *users.Controller, router *gin.RouterGroup, config *config.Configuration) {
 	userRoute := router.Group("/users")
 	publicUserRoute := userRoute
 
